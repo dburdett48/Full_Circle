@@ -1,0 +1,21 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ROLE_NAME
+          aws-region: us-east-1
+
+      - name: Deploy to Beanstalk
+        run: |
+          aws elasticbeanstalk create-application-version --application-name YOUR_APP_NAME --version-label v1 --source-bundle S3Bucket=YOUR_BUCKET,S3Key=YOUR_KEY
