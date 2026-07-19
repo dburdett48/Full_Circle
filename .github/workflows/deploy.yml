@@ -1,0 +1,107 @@
+```yaml
+name: Build and deploy Full_Circle
+
+on:
+  push:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy ASP.NET Core website
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Find project file
+        id: project
+        shell: powershell
+        run: |
+          $projects = Get-ChildItem `
+            -Path "${{ github.workspace }}" `
+            -Filter "*.csproj" `
+            -Recurse
+
+          if ($projects.Count -eq 0) {
+            throw "No .csproj file was found."
+          }
+
+          if ($projects.Count -gt 1) {
+            Write-Host "Projects found:"
+            $projects.FullName | ForEach-Object {
+              Write-Host $_
+            }
+
+            throw "More than one .csproj file was found. Set the project path manually."
+          }
+
+          $projectPath = $projects[0].FullName
+
+          Write-Host "Using project: $projectPath"
+          "path=$projectPath" >> $env:GITHUB_OUTPUT
+
+      - name: Restore packages
+        shell: powershell
+        run: |
+          dotnet restore "${{ steps.project.outputs.path }}"
+
+      - name: Build website
+        shell: powershell
+        run: |
+          dotnet build "${{ steps.project.outputs.path }}" `
+            --configuration Release `
+            --no-restore
+
+      - name: Publish website
+        shell: powershell
+        run: |
+          dotnet publish "${{ steps.project.outputs.path }}" `
+            --configuration Release `
+            --no-build `
+            --output "${{ github.workspace }}\publish"
+
+      - name: Deploy website to IIS folder
+        shell: powershell
+        run: |
+          $source = "${{ github.workspace }}\publish"
+          $destination = "C:\inetpub\wwwroot\Full_Circle"
+          $offlineFile = Join-Path $destination "app_offline.htm"
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path $destination | Out-Null
+
+          try {
+            Set-Content `
+              -Path $offlineFile `
+              -Value "<h1>Website update in progress</h1>"
+
+            Start-Sleep -Seconds 3
+
+            robocopy $source $destination /MIR /R:3 /W:5
+
+            if ($LASTEXITCODE -ge 8) {
+              throw "Robocopy failed with exit code $LASTEXITCODE."
+            }
+
+            Write-Host "Full_Circle deployed successfully."
+          }
+          finally {
+            if (Test-Path $offlineFile) {
+              Remove-Item $offlineFile -Force
+            }
+          }
+```
