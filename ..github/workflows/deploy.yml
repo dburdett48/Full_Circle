@@ -13,9 +13,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ROLE_NAME
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::294983767467:role/Git_Full_Circle
+          aws-region: eu-west-2a
 
       - name: Deploy to Beanstalk
         run: |
-          aws elasticbeanstalk create-application-version --application-name YOUR_APP_NAME --version-label v1 --source-bundle S3Bucket=YOUR_BUCKET,S3Key=YOUR_KEY
+          aws elasticbeanstalk create-application-version --application-name TPRM --version-label v1 --source-bundle S3Bucket=the-circle-bucket-294983767467-eu-west-2-an
