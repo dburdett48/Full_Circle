@@ -13,7 +13,7 @@ env:
   AWS_REGION: eu-west-2
   EB_APPLICATION_NAME: TPRM
   EB_ENVIRONMENT_NAME: TPRM-env
-  S3_BUCKET: the-circle-bucket-294983767467-eu-west-2
+  S3_BUCKET: the-circle-bucket-294983767467-eu-west-2-an
 
 jobs:
   deploy:
