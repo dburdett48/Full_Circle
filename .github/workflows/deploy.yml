@@ -1,107 +1,73 @@
-```yaml
-name: Build and deploy Full_Circle
+name: DAB2
 
 on:
   push:
     branches:
       - master
 
-  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  EB_APPLICATION_NAME: TPRM
+  EB_ENVIRONMENT_NAME: TPRM-env
+  S3_BUCKET: the-circle-bucket-294983767467-eu-west-2-an
 
 jobs:
   deploy:
-    name: Deploy ASP.NET Core website
-    runs-on:
-      - self-hosted
-      - Windows
-      - X64
+    runs-on: windows-latest
 
     steps:
-      - name: Download repository
-        uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v6
 
-      - name: Install .NET 10
-        uses: actions/setup-dotnet@v5
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          dotnet-version: "10.0.x"
+          role-to-assume: arn:aws:iam::294983767467:role/Git_Full_Circle
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Find project file
-        id: project
-        shell: powershell
+      - name: Package application
+        shell: pwsh
         run: |
-          $projects = Get-ChildItem `
-            -Path "${{ github.workspace }}" `
-            -Filter "*.csproj" `
-            -Recurse
+          $ErrorActionPreference = "Stop"
+          git archive --format=zip --output=deploy.zip HEAD
 
-          if ($projects.Count -eq 0) {
-            throw "No .csproj file was found."
-          }
-
-          if ($projects.Count -gt 1) {
-            Write-Host "Projects found:"
-            $projects.FullName | ForEach-Object {
-              Write-Host $_
-            }
-
-            throw "More than one .csproj file was found. Set the project path manually."
-          }
-
-          $projectPath = $projects[0].FullName
-
-          Write-Host "Using project: $projectPath"
-          "path=$projectPath" >> $env:GITHUB_OUTPUT
-
-      - name: Restore packages
-        shell: powershell
+      - name: Upload application bundle
+        shell: pwsh
         run: |
-          dotnet restore "${{ steps.project.outputs.path }}"
+          $ErrorActionPreference = "Stop"
 
-      - name: Build website
-        shell: powershell
+          $version = "${{ github.sha }}"
+          $s3Key = "elastic-beanstalk/$version.zip"
+
+          aws s3 cp deploy.zip "s3://${env:S3_BUCKET}/$s3Key"
+
+      - name: Create Elastic Beanstalk application version
+        shell: pwsh
         run: |
-          dotnet build "${{ steps.project.outputs.path }}" `
-            --configuration Release `
-            --no-restore
+          $ErrorActionPreference = "Stop"
 
-      - name: Publish website
-        shell: powershell
+          $version = "${{ github.sha }}"
+          $s3Key = "elastic-beanstalk/$version.zip"
+
+          aws elasticbeanstalk create-application-version `
+            --application-name "${env:EB_APPLICATION_NAME}" `
+            --version-label "$version" `
+            --source-bundle "S3Bucket=${env:S3_BUCKET},S3Key=$s3Key"
+
+      - name: Deploy application version
+        shell: pwsh
         run: |
-          dotnet publish "${{ steps.project.outputs.path }}" `
-            --configuration Release `
-            --no-build `
-            --output "${{ github.workspace }}\publish"
+          $ErrorActionPreference = "Stop"
 
-      - name: Deploy website to IIS folder
-        shell: powershell
-        run: |
-          $source = "${{ github.workspace }}\publish"
-          $destination = "C:\inetpub\wwwroot\Full_Circle"
-          $offlineFile = Join-Path $destination "app_offline.htm"
+          $version = "${{ github.sha }}"
 
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path $destination | Out-Null
+          aws elasticbeanstalk update-environment `
+            --environment-name "${env:EB_ENVIRONMENT_NAME}" `
+            --version-label "$version"
 
-          try {
-            Set-Content `
-              -Path $offlineFile `
-              -Value "<h1>Website update in progress</h1>"
-
-            Start-Sleep -Seconds 3
-
-            robocopy $source $destination /MIR /R:3 /W:5
-
-            if ($LASTEXITCODE -ge 8) {
-              throw "Robocopy failed with exit code $LASTEXITCODE."
-            }
-
-            Write-Host "Full_Circle deployed successfully."
-          }
-          finally {
-            if (Test-Path $offlineFile) {
-              Remove-Item $offlineFile -Force
-            }
-          }
-```
+          aws elasticbeanstalk wait environment-updated `
+            --environment-names "${env:EB_ENVIRONMENT_NAME}"
