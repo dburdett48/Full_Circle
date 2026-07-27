@@ -1,12 +1,588 @@
 ﻿@page
-@model IndexModel
+@model Full_Circle.Pages.IndexModel
+
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Full Circle";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to Full Cirlce</h1>
+<style>
+    :root {
+        --fc-bg: #07111f;
+        --fc-panel: rgba(255, 255, 255, 0.07);
+        --fc-border: rgba(255, 255, 255, 0.12);
+        --fc-primary: #55e6c1;
+        --fc-secondary: #6c8cff;
+        --fc-text: #f8fafc;
+        --fc-muted: #a8b3c7;
+    }
 
-    <h1 class="display-4">By David Burdett 11/7/2026</h1>
-  
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background:
+            radial-gradient(circle at 15% 10%, rgba(108, 140, 255, 0.22), transparent 30%),
+            radial-gradient(circle at 85% 20%, rgba(85, 230, 193, 0.18), transparent 28%),
+            var(--fc-bg);
+        color: var(--fc-text);
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .fc-page {
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    .fc-container {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+    }
+
+    .fc-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 0;
+    }
+
+    .fc-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        text-decoration: none;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .fc-logo {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--fc-primary), var(--fc-secondary));
+        color: #07111f;
+        font-weight: 900;
+        box-shadow: 0 12px 35px rgba(85, 230, 193, 0.25);
+    }
+
+    .fc-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+    }
+
+    .fc-nav-links a {
+        color: var(--fc-muted);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+    .fc-nav-links a:hover {
+        color: white;
+    }
+
+    .fc-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 22px;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 800;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            background 0.2s ease;
+    }
+
+    .fc-button:hover {
+        transform: translateY(-2px);
+    }
+
+    .fc-button-primary {
+        background: linear-gradient(135deg, var(--fc-primary), #8df5db);
+        color: #07111f;
+        box-shadow: 0 14px 40px rgba(85, 230, 193, 0.22);
+    }
+
+    .fc-button-secondary {
+        border-color: var(--fc-border);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        backdrop-filter: blur(12px);
+    }
+
+    .fc-hero {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: center;
+        gap: 70px;
+        padding: 84px 0 105px;
+    }
+
+    .fc-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 13px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(85, 230, 193, 0.25);
+        border-radius: 999px;
+        background: rgba(85, 230, 193, 0.08);
+        color: #a9f7e3;
+        font-size: 0.86rem;
+        font-weight: 800;
+    }
+
+    .fc-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--fc-primary);
+        box-shadow: 0 0 14px var(--fc-primary);
+    }
+
+    .fc-hero h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(3rem, 7vw, 5.8rem);
+        line-height: 0.98;
+        letter-spacing: -0.065em;
+    }
+
+    .fc-gradient-text {
+        background: linear-gradient(100deg, var(--fc-primary), #a9f7e3, var(--fc-secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .fc-hero-copy {
+        max-width: 650px;
+        margin: 26px 0 32px;
+        color: var(--fc-muted);
+        font-size: 1.16rem;
+        line-height: 1.75;
+    }
+
+    .fc-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .fc-trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        margin-top: 32px;
+        color: var(--fc-muted);
+        font-size: 0.92rem;
+        font-weight: 650;
+    }
+
+    .fc-trust span::before {
+        content: "✓";
+        margin-right: 7px;
+        color: var(--fc-primary);
+    }
+
+    .fc-dashboard {
+        position: relative;
+        padding: 20px;
+        border: 1px solid var(--fc-border);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.07);
+        box-shadow: 0 32px 90px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(18px);
+        transform: rotate(1.5deg);
+    }
+
+    .fc-dashboard::before {
+        content: "";
+        position: absolute;
+        inset: -35px;
+        z-index: -1;
+        border-radius: 50%;
+        background: rgba(108, 140, 255, 0.13);
+        filter: blur(45px);
+    }
+
+    .fc-window-bar {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 20px;
+    }
+
+    .fc-window-bar span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .fc-chart {
+        height: 220px;
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        padding: 24px;
+        border: 1px solid var(--fc-border);
+        border-radius: 20px;
+        background: rgba(3, 10, 22, 0.55);
+    }
+
+    .fc-bar {
+        flex: 1;
+        min-width: 18px;
+        border-radius: 9px 9px 3px 3px;
+        background: linear-gradient(to top, var(--fc-secondary), var(--fc-primary));
+        animation: fcRise 0.9s ease both;
+        transform-origin: bottom;
+    }
+
+    .fc-bar:nth-child(1) { height: 34%; }
+    .fc-bar:nth-child(2) { height: 52%; }
+    .fc-bar:nth-child(3) { height: 44%; }
+    .fc-bar:nth-child(4) { height: 68%; }
+    .fc-bar:nth-child(5) { height: 59%; }
+    .fc-bar:nth-child(6) { height: 82%; }
+    .fc-bar:nth-child(7) { height: 72%; }
+    .fc-bar:nth-child(8) { height: 94%; }
+
+    @@keyframes fcRise {
+        from {
+            opacity: 0;
+            transform: scaleY(0);
+        }
+
+        to {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    }
+
+    .fc-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .fc-metric {
+        padding: 16px;
+        border: 1px solid var(--fc-border);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.045);
+    }
+
+    .fc-metric strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 1.3rem;
+    }
+
+    .fc-metric small {
+        color: var(--fc-muted);
+    }
+
+    .fc-section {
+        padding: 95px 0;
+    }
+
+    .fc-section-heading {
+        max-width: 680px;
+        margin: 0 auto 48px;
+        text-align: center;
+    }
+
+    .fc-section-heading h2 {
+        margin: 0 0 16px;
+        font-size: clamp(2.1rem, 4vw, 3.4rem);
+        letter-spacing: -0.04em;
+    }
+
+    .fc-section-heading p {
+        margin: 0;
+        color: var(--fc-muted);
+        font-size: 1.06rem;
+        line-height: 1.7;
+    }
+
+    .fc-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .fc-card {
+        padding: 28px;
+        border: 1px solid var(--fc-border);
+        border-radius: 22px;
+        background: var(--fc-panel);
+        backdrop-filter: blur(15px);
+        transition:
+            transform 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .fc-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(85, 230, 193, 0.45);
+    }
+
+    .fc-icon {
+        width: 50px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 20px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, rgba(85, 230, 193, 0.18), rgba(108, 140, 255, 0.22));
+        font-size: 1.45rem;
+    }
+
+    .fc-card h3 {
+        margin: 0 0 11px;
+        font-size: 1.25rem;
+    }
+
+    .fc-card p {
+        margin: 0;
+        color: var(--fc-muted);
+        line-height: 1.65;
+    }
+
+    .fc-cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+        padding: 48px;
+        margin-bottom: 70px;
+        border: 1px solid rgba(85, 230, 193, 0.28);
+        border-radius: 28px;
+        background:
+            linear-gradient(135deg, rgba(85, 230, 193, 0.13), rgba(108, 140, 255, 0.14)),
+            rgba(255, 255, 255, 0.04);
+    }
+
+    .fc-cta h2 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 4vw, 3rem);
+    }
+
+    .fc-cta p {
+        margin: 0;
+        color: var(--fc-muted);
+    }
+
+    .fc-footer {
+        padding: 0 0 35px;
+        color: var(--fc-muted);
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    @@media (max-width: 900px) {
+        .fc-hero {
+            grid-template-columns: 1fr;
+            padding-top: 55px;
+        }
+
+        .fc-dashboard {
+            transform: none;
+        }
+
+        .fc-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .fc-cta {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .fc-nav-links a:not(.fc-button) {
+            display: none;
+        }
+
+        .fc-hero {
+            padding-bottom: 65px;
+        }
+
+        .fc-actions {
+            flex-direction: column;
+        }
+
+        .fc-button {
+            width: 100%;
+        }
+
+        .fc-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .fc-cta {
+            padding: 30px;
+        }
+    }
+</style>
+
+<div class="fc-page">
+    <div class="fc-container">
+        <nav class="fc-nav">
+            <a class="fc-brand" href="/">
+                <span class="fc-logo">FC</span>
+                <span>Full Circle by David Burdett</span>
+            </a>
+
+            <div class="fc-nav-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a class="fc-button fc-button-secondary" href="#contact">Get started</a>
+            </div>
+        </nav>
+
+        <main>
+            <section class="fc-hero">
+                <div>
+                    <div class="fc-badge">
+                        <span class="fc-dot"></span>
+                        Your new website is live
+                    </div>
+
+                    <h1>
+                        Bring every idea
+                        <span class="fc-gradient-text">full circle.</span>
+                    </h1>
+
+                    <p class="fc-hero-copy">
+                        A modern digital platform designed to simplify complex work,
+                        connect people and turn ambitious ideas into measurable results.
+                    </p>
+
+                    <div class="fc-actions">
+                        <a class="fc-button fc-button-primary" href="#contact">
+                            Start your journey →
+                        </a>
+
+                        <a class="fc-button fc-button-secondary" href="#features">
+                            Explore the platform
+                        </a>
+                    </div>
+
+                    <div class="fc-trust">
+                        <span>Fast and responsive</span>
+                        <span>Secure by design</span>
+                        <span>Built for growth</span>
+                    </div>
+                </div>
+
+                <div class="fc-dashboard">
+                    <div class="fc-window-bar">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="fc-chart">
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                        <div class="fc-bar"></div>
+                    </div>
+
+                    <div class="fc-metrics">
+                        <div class="fc-metric">
+                            <small>Performance</small>
+                            <strong>98%</strong>
+                        </div>
+
+                        <div class="fc-metric">
+                            <small>Growth</small>
+                            <strong>+42%</strong>
+                        </div>
+
+                        <div class="fc-metric">
+                            <small>Status</small>
+                            <strong>Live</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="fc-section" id="features">
+                <div class="fc-section-heading">
+                    <h2>Everything you need to move forward</h2>
+                    <p>
+                        Powerful capabilities wrapped in a clean, straightforward
+                        experience that keeps your work moving.
+                    </p>
+                </div>
+
+                <div class="fc-grid">
+                    <article class="fc-card">
+                        <div class="fc-icon">⚡</div>
+                        <h3>Move faster</h3>
+                        <p>
+                            Streamline repetitive tasks and give your team more time
+                            to focus on work that creates real value.
+                        </p>
+                    </article>
+
+                    <article class="fc-card">
+                        <div class="fc-icon">◎</div>
+                        <h3>See the whole picture</h3>
+                        <p>
+                            Bring information together in one place and turn complex
+                            data into clear, useful insight.
+                        </p>
+                    </article>
+
+                    <article class="fc-card">
+                        <div class="fc-icon">↗</div>
+                        <h3>Grow confidently</h3>
+                        <p>
+                            Build on a reliable foundation that can evolve alongside
+                            your organisation, customers and ambitions.
+                        </p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="fc-section" id="about">
+                <div class="fc-cta" id="contact">
+                    <div>
+                        <h2>Ready to complete the circle?</h2>
+                        <p>
+                            Start building something remarkable today.
+                        </p>
+                    </div>
+
+                    <a class="fc-button fc-button-primary" href="dburdett41@gmail.com">
+                        Contact us →
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <footer class="fc-footer">
+            © @DateTime.Now.Year Full Circle. All rights reserved.
+        </footer>
+    </div>
 </div>

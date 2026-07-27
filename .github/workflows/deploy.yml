@@ -12,7 +12,7 @@ permissions:
 env:
   AWS_REGION: eu-west-2
   EB_APPLICATION_NAME: TPRM
-  EB_ENVIRONMENT_NAME: TPRM-env
+  EB_ENVIRONMENT_NAME: Cloud3
   S3_BUCKET: the-circle-bucket-294983767467-eu-west-2-an
 
 jobs:
@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Build with .NET
+        run: dotnet build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
