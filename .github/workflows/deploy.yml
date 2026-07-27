@@ -29,7 +29,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::294983767467:role/Git_Full_Circle
+          role-to-assume: arn:aws:iam::294983767467:role/Full_Circle
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Package application
