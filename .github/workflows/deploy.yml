@@ -86,8 +86,8 @@ jobs:
                   name = "Full_Circle"
                   parameters = @{
                     appBundle = "site.zip"
-                    appPath = "/"
-                    hostingModel = "inprocess"
+                    //appPath = "/"
+                    //hostingModel = "inprocess"
                   }
                 }
               )
