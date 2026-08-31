@@ -69,9 +69,14 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
+          Remove-Item site.zip -Force -ErrorAction SilentlyContinue
+          Remove-Item deploy.zip -Force -ErrorAction SilentlyContinue
+          Remove-Item aws-windows-deployment-manifest.json -Force -ErrorAction SilentlyContinue
+
           Compress-Archive `
             -Path publish\* `
-            -DestinationPath site.zip
+            -DestinationPath site.zip `
+            -Force
 
           $manifest = @{
             manifestVersion = 1
@@ -97,7 +102,8 @@ jobs:
 
           Compress-Archive `
             -Path site.zip,aws-windows-deployment-manifest.json `
-            -DestinationPath deploy.zip
+            -DestinationPath deploy.zip `
+            -Force
 
       - name: Upload application bundle
         shell: pwsh
