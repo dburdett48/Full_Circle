@@ -1,0 +1,76 @@
+name: DAB2
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  EB_APPLICATION_NAME: TPRM
+  EB_ENVIRONMENT_NAME: Cloud3
+  S3_BUCKET: the-circle-bucket-294983767467-eu-west-2-an
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+# This is a test comment2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build with .NET
+        run: dotnet build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::294983767467:role/Full_Circle
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Package application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git archive --format=zip --output=deploy.zip HEAD
+
+      - name: Upload application bundle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $version = "${{ github.sha }}"
+          $s3Key = "elastic-beanstalk/$version.zip"
+
+          aws s3 cp deploy.zip "s3://${env:S3_BUCKET}/$s3Key"
+
+      - name: Create Elastic Beanstalk application version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $version = "${{ github.sha }}"
+          $s3Key = "elastic-beanstalk/$version.zip"
+
+          aws elasticbeanstalk create-application-version `
+            --application-name "${env:EB_APPLICATION_NAME}" `
+            --version-label "$version" `
+            --source-bundle "S3Bucket=${env:S3_BUCKET},S3Key=$s3Key"
+
+      - name: Deploy application version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $version = "${{ github.sha }}"
+
+          aws elasticbeanstalk update-environment `
+            --environment-name "${env:EB_ENVIRONMENT_NAME}" `
+            --version-label "$version"
+
+          aws elasticbeanstalk wait environment-updated `
+            --environment-names "${env:EB_ENVIRONMENT_NAME}"
