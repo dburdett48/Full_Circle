@@ -26,7 +26,7 @@ jobs:
       - name: Build with .NET
         run: dotnet build
 
-           - name: Show OIDC claims
+      - name: Show OIDC claims
         uses: github/actions-oidc-debugger@main
         with:
           audience: sts.amazonaws.com
