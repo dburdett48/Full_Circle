@@ -1,0 +1,14 @@
+{
+  "manifestVersion": 1,
+  "deployments": {
+    "aspNetCoreWeb": [
+      {
+        "name": "Full_Circle",
+        "parameters": {
+          "appBundle": "site.zip",
+          "iisPath": "/"
+        }
+      }
+    ]
+  }
+}
