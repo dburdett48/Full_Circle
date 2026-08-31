@@ -1,5 +1,5 @@
 name: DAB2
-# nocomment2
+
 on:
   push:
     branches:
@@ -18,13 +18,16 @@ env:
 jobs:
   deploy:
     runs-on: windows-latest
-# This is a test comment2
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Build with .NET
-        run: dotnet build
+      - name: Publish .NET application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          dotnet publish -c Release -o publish
 
       - name: Show OIDC claims
         shell: pwsh
@@ -65,7 +68,36 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          git archive --format=zip --output=deploy.zip HEAD
+
+          Compress-Archive `
+            -Path publish\* `
+            -DestinationPath site.zip
+
+          $manifest = @{
+            manifestVersion = 1
+            deployments = @{
+              aspNetCoreWeb = @(
+                @{
+                  name = "Full_Circle"
+                  parameters = @{
+                    appBundle = "site.zip"
+                    appPath = "/"
+                    hostingModel = "inprocess"
+                  }
+                }
+              )
+            }
+          }
+
+          $manifest |
+            ConvertTo-Json -Depth 10 |
+            Set-Content `
+              -Path aws-windows-deployment-manifest.json `
+              -Encoding utf8
+
+          Compress-Archive `
+            -Path site.zip,aws-windows-deployment-manifest.json `
+            -DestinationPath deploy.zip
 
       - name: Upload application bundle
         shell: pwsh
