@@ -27,9 +27,33 @@ jobs:
         run: dotnet build
 
       - name: Show OIDC claims
-        uses: github/actions-oidc-debugger@main
-        with:
-          audience: sts.amazonaws.com
+        shell: pwsh
+        run: |
+          $url = "$env:ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com"
+
+          $headers = @{
+            Authorization = "Bearer $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          }
+
+          $response = Invoke-RestMethod -Uri $url -Headers $headers
+
+          $jwt = $response.value
+          $payload = $jwt.Split('.')[1]
+
+          $payload = $payload.Replace('-', '+').Replace('_', '/')
+          while ($payload.Length % 4) {
+            $payload += '='
+          }
+
+          $json = [System.Text.Encoding]::UTF8.GetString(
+            [Convert]::FromBase64String($payload)
+          )
+
+          $claims = $json | ConvertFrom-Json
+
+          Write-Host "ISS: $($claims.iss)"
+          Write-Host "AUD: $($claims.aud)"
+          Write-Host "SUB: $($claims.sub)"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
