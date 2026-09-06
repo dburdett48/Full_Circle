@@ -12,31 +12,97 @@ permissions:
 env:
   AWS_REGION: eu-west-2
   EB_APPLICATION_NAME: TPRM
-  EB_ENVIRONMENT_NAME: Cloud3
+  EB_ENVIRONMENT_NAME: Circle1
   S3_BUCKET: the-circle-bucket-294983767467-eu-west-2-an
 
 jobs:
   deploy:
     runs-on: windows-latest
-# This is a test comment2
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Build with .NET
-        run: dotnet build
+      - name: Publish .NET application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          dotnet publish -c Release -o publish
+
+      - name: Show OIDC claims
+        shell: pwsh
+        run: |
+          $url = "$env:ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com"
+
+          $headers = @{
+            Authorization = "Bearer $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          }
+
+          $response = Invoke-RestMethod -Uri $url -Headers $headers
+
+          $jwt = $response.value
+          $payload = $jwt.Split('.')[1]
+
+          $payload = $payload.Replace('-', '+').Replace('_', '/')
+          while ($payload.Length % 4) {
+            $payload += '='
+          }
+
+          $json = [System.Text.Encoding]::UTF8.GetString(
+            [Convert]::FromBase64String($payload)
+          )
+
+          $claims = $json | ConvertFrom-Json
+
+          Write-Host "ISS: $($claims.iss)"
+          Write-Host "AUD: $($claims.aud)"
+          Write-Host "SUB: $($claims.sub)"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::294983767467:role/Full_Circle
+          role-to-assume: arn:aws:iam::294983767467:role/Git_Full_Circle
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Package application
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          git archive --format=zip --output=deploy.zip HEAD
+
+          Remove-Item site.zip -Force -ErrorAction SilentlyContinue
+          Remove-Item deploy.zip -Force -ErrorAction SilentlyContinue
+          Remove-Item aws-windows-deployment-manifest.json -Force -ErrorAction SilentlyContinue
+
+          Compress-Archive `
+            -Path publish\* `
+            -DestinationPath site.zip `
+            -Force
+
+          $manifest = @{
+            manifestVersion = 1
+            deployments = @{
+              aspNetCoreWeb = @(
+                @{
+                  name = "Full_Circle"
+                  parameters = @{
+                    appBundle = "site.zip"
+                  
+                  }
+                }
+              )
+            }
+          }
+
+          $manifest |
+            ConvertTo-Json -Depth 10 |
+            Set-Content `
+              -Path aws-windows-deployment-manifest.json `
+              -Encoding utf8
+
+          Compress-Archive `
+            -Path site.zip,aws-windows-deployment-manifest.json `
+            -DestinationPath deploy.zip `
+            -Force
 
       - name: Upload application bundle
         shell: pwsh
